@@ -1,10 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Victoria's Website</title>
+  <meta charset="UTF-8" />
+  <title>Snake Game</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background-color: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    canvas {
+      background: #222;
+      border: 2px solid #fff;
+    }
+
+    #score {
+      margin: 20px;
+      font-size: 24px;
+    }
+
+    #game-over {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      font-size: 32px;
+      padding: 20px 40px;
+      border-radius: 12px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <h1>You have reached Victoria's website</h1>
+  <div id="score">Score: 0</div>
+  <canvas id="game" width="400" height="400"></canvas>
+  <div id="game-over">Game Over! Press any key to restart</div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const box = 20;
+    const rows = canvas.height / box;
+    const cols = canvas.width / box;
+
+    let snake;
+    let food;
+    let dx;
+    let dy;
+    let score = 0;
+    let running = true;
+
+    function resetGame() {
+      snake = [{x: 9 * box, y: 9 * box}];
+      dx = box;
+      dy = 0;
+      score = 0;
+      running = true;
+      document.getElementById('score').innerText = "Score: 0";
+      document.getElementById('game-over').style.display = 'none';
+      placeFood();
+    }
+
+    function placeFood() {
+      food = {
+        x: Math.floor(Math.random() * cols) * box,
+        y: Math.floor(Math.random() * rows) * box
+      };
+    }
+
+    function drawSnake() {
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "#00ff88" : "#fff";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      }
+    }
+
+    function drawFood() {
+      ctx.fillStyle = "#ff4444";
+      ctx.fillRect(food.x, food.y, box, box);
+    }
+
+    function update() {
+      if (!running) return;
+
+      const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+      // Wall collision
+      if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+        endGame();
+        return;
+      }
+
+      // Self collision
+      for (let part of snake) {
+        if (head.x === part.x && head.y === part.y) {
+          endGame();
+          return;
+        }
+      }
+
+      snake.unshift(head);
+
+      // Eat food
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        document.getElementById('score').innerText = "Score: " + score;
+        placeFood();
+      } else {
+        snake.pop();
+      }
+
+      // Clear and redraw
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawSnake();
+      drawFood();
+
+      requestAnimationFrame(update);
+    }
+
+    function endGame() {
+      running = false;
+      document.getElementById('game-over').style.display = 'block';
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (!running) {
+        resetGame();
+        requestAnimationFrame(update);
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowUp':
+          if (dy === 0) { dx = 0; dy = -box; }
+          break;
+        case 'ArrowDown':
+          if (dy === 0) { dx = 0; dy = box; }
+          break;
+        case 'ArrowLeft':
+          if (dx === 0) { dx = -box; dy = 0; }
+          break;
+        case 'ArrowRight':
+          if (dx === 0) { dx = box; dy = 0; }
+          break;
+      }
+    });
+
+    resetGame();
+    requestAnimationFrame(update);
+  </script>
 </body>
 </html>
